@@ -3,8 +3,11 @@
   <h1>V838 Monocerotis Light Echo Study</h1>
   <p><strong>A procedural, math-driven visualization of V838 Monocerotis and its iconic expanding light echo.</strong></p>
   <p>
-    <a href="https://youtu.be/jXmtfuEqThI"><strong>Demo Video</strong></a>
-    |
+    <a href="https://youtu.be/jXmtfuEqThI">
+      <img alt="Watch the Echo Atlas video on YouTube" src="https://img.shields.io/badge/Watch%20Video-YouTube-red?style=for-the-badge&logo=youtube&logoColor=white">
+    </a>
+  </p>
+  <p>
     <a href="./index.html"><strong>Interactive Console</strong></a>
     |
     <a href="./render_v838.py"><strong>Renderer Source</strong></a>
@@ -28,9 +31,18 @@ by expanding, uneven, filamentary dust illuminated by a light echo.
 
 ![Echo Atlas banner](./echo_atlas_banner.png)
 
+> This is an artistic procedural visualization, not a calibrated astrophysical
+> simulation. The model is physically inspired, but tuned for visual
+> recognition and mathematical expressiveness.
+
 ## Preview
 
-![Echo Atlas epoch preview](./echo_atlas_preview.gif)
+<a href="https://youtu.be/jXmtfuEqThI">
+  <img src="./echo_atlas_preview.gif" alt="Echo Atlas epoch preview animation linking to the YouTube demo" width="100%">
+</a>
+
+Every image shown here is generated from the included Python renderer. No
+source astronomy image is used as an input texture.
 
 ## Highlights
 
@@ -83,7 +95,9 @@ can be copied as a static folder.
 
 Watch the project demo on YouTube:
 
-[Echo Atlas demo video](https://youtu.be/jXmtfuEqThI)
+<a href="https://youtu.be/jXmtfuEqThI">
+  <img alt="Watch the Echo Atlas video on YouTube" src="https://img.shields.io/badge/Watch%20Video-YouTube-red?style=for-the-badge&logo=youtube&logoColor=white">
+</a>
 
 ## Generated Images
 
@@ -95,15 +109,19 @@ The browser app depends on these image artifacts:
 | `v838_monocerotis_2002.png` | Earlier, tighter light echo preset |
 | `v838_monocerotis_2006.png` | Later, broader light echo preset |
 | `echo_atlas_banner.png` | README and social-preview banner asset |
+| `echo_atlas_social_preview.png` | `1280 x 640` GitHub social preview image |
 | `echo_atlas_preview.gif` | Lightweight epoch preview animation |
 
 The three generated render PNGs are `2000 x 960` RGB images.
 
 ## Gallery
 
-| 2002-style Echo | 2004-style Echo | 2006-style Echo |
-| --- | --- | --- |
-| ![2002-style generated V838 Monocerotis render](./v838_monocerotis_2002.png) | ![2004-style generated V838 Monocerotis render](./v838_monocerotis.png) | ![2006-style generated V838 Monocerotis render](./v838_monocerotis_2006.png) |
+<p align="center">
+  <img src="./v838_monocerotis_2002.png" alt="2002-style generated V838 Monocerotis render" width="32%">
+  <img src="./v838_monocerotis.png" alt="2004-style generated V838 Monocerotis render" width="32%">
+  <img src="./v838_monocerotis_2006.png" alt="2006-style generated V838 Monocerotis render" width="32%">
+</p>
+<p align="center"><em>2002-style early echo | 2004-style reference phase | 2006-style wide echo</em></p>
 
 ## Render From Source
 
@@ -178,6 +196,40 @@ The RGB channels are not simple grayscale copies. Dense dust is pushed toward
 rust and amber, thin scatter is allowed to drift toward blue-gray, and the
 central source remains warm rather than white-hot.
 
+## Rendering Model
+
+The renderer is organized as a field-composition pipeline rather than an image
+processing pass over source astronomy imagery:
+
+```text
+coordinate field
+  -> radial echo surface
+  -> synthetic dust sheets
+  -> filament texture
+  -> asymmetry masks
+  -> RGB color mapping
+  -> tone mapping / export
+```
+
+The core geometry is a light-echo-inspired surface moving through dust sheets:
+
+```text
+r = sqrt((x / sx)^2 + (y / sy)^2)
+z_echo = (r^2 - t^2) / 2t
+z_sheet_i = z_i + ax_i*x + ay_i*y + FBM_i(x,y)
+E_volume = sum_i w_i * exp(-((z_echo - z_sheet_i)^2) / (2*sigma_i^2))
+```
+
+The visible structure is then built by multiplying that volume contribution
+with procedural filaments, broken shell accents, and directional masks:
+
+```text
+dust = ridge_noise(x,y) + radial_strata(r,theta) + angular_lace(x,y)
+mask = directional(theta) * clumps(x,y) * gaps(r,theta)
+I = S_star + (E_volume + E_shells) * dust * mask
+RGB = tone_map(color_transfer(I, density, scatter, star_glow))
+```
+
 ## Project Structure
 
 ```text
@@ -185,6 +237,7 @@ v838-monocerotis/
   index.html                 Standalone interactive browser console
   logo.png                   Echo Atlas logo asset
   echo_atlas_banner.png      README / social preview banner
+  echo_atlas_social_preview.png  1280x640 GitHub social preview image
   echo_atlas_preview.gif     Lightweight epoch preview animation
   render_v838.py             Reproducible procedural renderer
   v838_monocerotis.png       Default 2004-style generated image
