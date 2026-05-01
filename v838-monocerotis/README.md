@@ -1,4 +1,21 @@
-# V838 Monocerotis Light Echo Study
+<div align="center">
+  <img src="./logo.png" alt="Echo Atlas logo" width="112">
+  <h1>V838 Monocerotis Light Echo Study</h1>
+  <p><strong>A procedural, math-driven visualization of V838 Monocerotis and its iconic expanding light echo.</strong></p>
+  <p>
+    <a href="https://youtu.be/jXmtfuEqThI"><strong>Demo Video</strong></a>
+    |
+    <a href="./index.html"><strong>Interactive Console</strong></a>
+    |
+    <a href="./render_v838.py"><strong>Renderer Source</strong></a>
+  </p>
+  <p>
+    <img alt="Python 3" src="https://img.shields.io/badge/python-3.x-3776AB?logo=python&logoColor=white">
+    <img alt="Static HTML app" src="https://img.shields.io/badge/app-static%20HTML-f59e0b">
+    <img alt="Procedural rendering" src="https://img.shields.io/badge/rendering-procedural-7c3aed">
+    <img alt="Status" src="https://img.shields.io/badge/status-polished%20prototype-22c55e">
+  </p>
+</div>
 
 A procedural, math-driven visualization of **V838 Monocerotis**, inspired by the
 famous Hubble light echo imagery that followed the star's 2002 outburst.
@@ -9,7 +26,19 @@ goal is not to copy a single telescope frame pixel-for-pixel, but to recreate
 the recognizable visual language of V838 Mon: a warm central source surrounded
 by expanding, uneven, filamentary dust illuminated by a light echo.
 
-![V838 Monocerotis procedural render](./v838_monocerotis.png)
+![Echo Atlas banner](./echo_atlas_banner.png)
+
+## Preview
+
+![Echo Atlas epoch preview](./echo_atlas_preview.gif)
+
+## Highlights
+
+- Procedural recreation of V838 Monocerotis from mathematical fields.
+- Standalone browser console with epoch presets, parameter controls, and PNG export.
+- Reproducible Python renderer for default, epoch, and custom outputs.
+- Light-echo-inspired geometry rather than flat accretion-disk or ring logic.
+- Synthetic dust sheets, filament texture, asymmetric masking, and separate RGB transfer functions.
 
 ## Overview
 
@@ -65,8 +94,16 @@ The browser app depends on these image artifacts:
 | `v838_monocerotis.png` | Default 2004-style reference render |
 | `v838_monocerotis_2002.png` | Earlier, tighter light echo preset |
 | `v838_monocerotis_2006.png` | Later, broader light echo preset |
+| `echo_atlas_banner.png` | README and social-preview banner asset |
+| `echo_atlas_preview.gif` | Lightweight epoch preview animation |
 
-All included PNGs are `2000 x 960` RGB images.
+The three generated render PNGs are `2000 x 960` RGB images.
+
+## Gallery
+
+| 2002-style Echo | 2004-style Echo | 2006-style Echo |
+| --- | --- | --- |
+| ![2002-style generated V838 Monocerotis render](./v838_monocerotis_2002.png) | ![2004-style generated V838 Monocerotis render](./v838_monocerotis.png) | ![2006-style generated V838 Monocerotis render](./v838_monocerotis_2006.png) |
 
 ## Render From Source
 
@@ -147,6 +184,8 @@ central source remains warm rather than white-hot.
 v838-monocerotis/
   index.html                 Standalone interactive browser console
   logo.png                   Echo Atlas logo asset
+  echo_atlas_banner.png      README / social preview banner
+  echo_atlas_preview.gif     Lightweight epoch preview animation
   render_v838.py             Reproducible procedural renderer
   v838_monocerotis.png       Default 2004-style generated image
   v838_monocerotis_2002.png  2002-style generated preset image
