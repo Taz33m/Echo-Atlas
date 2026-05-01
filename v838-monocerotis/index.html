@@ -1,0 +1,859 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>V838 Monocerotis Light Echo Study</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f4efe7;
+        --panel: #fffaf2;
+        --panel-strong: #f7ead9;
+        --line: #d9c8b5;
+        --line-soft: rgba(90, 69, 53, 0.14);
+        --text: #211a16;
+        --muted: #6d5e52;
+        --quiet: #8c7d70;
+        --amber: #b86f2e;
+        --rust: #944235;
+        --blue: #53758e;
+        --green: #6f8268;
+        --space: #101421;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at 15% 12%, rgba(83, 117, 142, 0.18), transparent 24%),
+          radial-gradient(circle at 72% 18%, rgba(184, 111, 46, 0.14), transparent 28%),
+          linear-gradient(135deg, #f9f4ec 0%, #efe5d7 48%, #f6f0e7 100%);
+        color: var(--text);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      main {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 360px;
+        align-items: stretch;
+        gap: 18px;
+        padding: 18px;
+      }
+
+      .visual-panel {
+        min-height: calc(100vh - 36px);
+        display: grid;
+      }
+
+      .stage {
+        position: relative;
+        min-height: calc(100vh - 36px);
+        display: grid;
+        overflow: hidden;
+        border: 1px solid rgba(90, 69, 53, 0.22);
+        background:
+          radial-gradient(circle at 48% 42%, rgba(184, 111, 46, 0.16), transparent 26%),
+          linear-gradient(180deg, #161b2a, #05070b);
+        box-shadow:
+          inset 0 0 120px rgba(0, 0, 0, 0.70),
+          0 28px 70px rgba(83, 68, 52, 0.18);
+      }
+
+      canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      .stage-vignette {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          linear-gradient(180deg, rgba(0, 0, 0, 0.12), transparent 30%, rgba(0, 0, 0, 0.34)),
+          radial-gradient(circle at 50% 44%, transparent 38%, rgba(0, 0, 0, 0.34) 100%);
+      }
+
+      .stage > :not(canvas, .stage-vignette) {
+        display: none;
+      }
+
+      .section-kicker {
+        margin: 0 0 10px;
+        color: var(--blue);
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.11em;
+      }
+
+      .panel-header .section-kicker {
+        margin: 0 0 10px;
+      }
+
+      aside {
+        min-height: calc(100vh - 36px);
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        padding: 0 18px;
+        border: 1px solid rgba(90, 69, 53, 0.18);
+        background:
+          linear-gradient(180deg, rgba(255, 250, 242, 0.96), rgba(246, 237, 226, 0.98)),
+          radial-gradient(circle at 55% 0%, rgba(184, 111, 46, 0.12), transparent 34%);
+        box-shadow: 0 24px 70px rgba(83, 68, 52, 0.14);
+      }
+
+      .panel-header {
+        padding: 20px 0 18px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+
+      .panel-header h2 {
+        margin: 0;
+        font-size: 23px;
+        line-height: 1.1;
+        letter-spacing: 0;
+      }
+
+      .panel-header p {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .control-section {
+        display: grid;
+        gap: 13px;
+        padding: 18px 0;
+        border-bottom: 1px solid var(--line-soft);
+      }
+
+      .control-section:last-child {
+        border-bottom: 0;
+      }
+
+      .section-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .section-title h3 {
+        margin: 0;
+        color: var(--rust);
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.10em;
+      }
+
+      .section-title span {
+        color: var(--quiet);
+        font-size: 11px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .segments {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+      }
+
+      .segment {
+        min-height: 42px;
+        border-color: rgba(143, 181, 207, 0.28);
+        color: var(--muted);
+        font-size: 12px;
+        background: rgba(255, 255, 255, 0.52);
+      }
+
+      .segment.active {
+        border-color: rgba(184, 111, 46, 0.72);
+        color: var(--text);
+        background: linear-gradient(180deg, #fff4e6, #efd8bc);
+      }
+
+      .row {
+        display: grid;
+        gap: 8px;
+      }
+
+      label {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .control-hint {
+        margin: -2px 0 0;
+        color: var(--quiet);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      output {
+        color: var(--text);
+        font-variant-numeric: tabular-nums;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+
+      input[type="range"] {
+        width: 100%;
+        accent-color: var(--amber);
+      }
+
+      .swatches {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+
+      .swatch {
+        min-height: 58px;
+        display: grid;
+        align-content: end;
+        padding: 9px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: rgba(243, 234, 223, 0.78);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .swatch:nth-child(1) {
+        background: linear-gradient(135deg, #050506, #11131c);
+      }
+
+      .swatch:nth-child(2) {
+        background: linear-gradient(135deg, #421f1a, #a74734);
+      }
+
+      .swatch:nth-child(3) {
+        background: linear-gradient(135deg, #6b4126, #d99a59);
+      }
+
+      .swatch:nth-child(4) {
+        background: linear-gradient(135deg, #33465a, #8fb5cf);
+      }
+
+      .actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .action-status {
+        min-height: 18px;
+        margin: 0;
+        color: var(--quiet);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      button {
+        min-height: 42px;
+        border: 1px solid rgba(184, 111, 46, 0.52);
+        background: linear-gradient(180deg, #fff7ed, #ead8c3);
+        color: var(--text);
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+        transition:
+          border-color 160ms ease,
+          background 160ms ease,
+          transform 160ms ease;
+      }
+
+      button:hover {
+        border-color: rgba(83, 117, 142, 0.76);
+      }
+
+      button:active {
+        transform: translateY(1px);
+      }
+
+      button:focus-visible,
+      input[type="range"]:focus-visible {
+        outline: 3px solid rgba(83, 117, 142, 0.42);
+        outline-offset: 3px;
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.58;
+      }
+
+      .primary-action {
+        min-height: 52px;
+        border-color: rgba(148, 66, 53, 0.86);
+        background: linear-gradient(180deg, #c47c3d, #944235 62%, #5b241f);
+        color: #fffaf2;
+        box-shadow: 0 12px 28px rgba(148, 66, 53, 0.20);
+      }
+
+      .secondary-action {
+        background: rgba(255, 255, 255, 0.56);
+        border-color: rgba(83, 117, 142, 0.28);
+        color: var(--text);
+      }
+
+      .model-copy {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .formula {
+        padding: 12px;
+        border: 1px solid rgba(83, 117, 142, 0.18);
+        background: rgba(255, 255, 255, 0.58);
+        color: #3b332d;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 11px;
+        line-height: 1.55;
+      }
+
+      .formula p {
+        margin: 0 0 10px;
+      }
+
+      .formula p:last-child {
+        margin-bottom: 0;
+      }
+
+      @media (max-width: 880px) {
+        main {
+          grid-template-columns: 1fr;
+          padding: 12px;
+        }
+
+        .visual-panel,
+        .stage {
+          min-height: 58vh;
+        }
+
+        aside {
+          min-height: 0;
+        }
+
+        .formula {
+          max-height: 170px;
+          overflow: auto;
+        }
+
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="visual-panel">
+        <div class="stage">
+          <canvas id="canvas"></canvas>
+          <div class="stage-vignette"></div>
+        </div>
+      </section>
+      <aside>
+        <header class="panel-header">
+          <p class="section-kicker">Rendering console</p>
+          <h2>Light Echo Model</h2>
+          <p>Epoch presets adjust the echo surface, dust contrast, and central illumination for a V838 Mon-inspired procedural render.</p>
+        </header>
+
+        <section class="control-section">
+          <div class="section-title">
+            <h3>Epoch</h3>
+            <span>Hubble reference</span>
+          </div>
+          <div class="segments" aria-label="Epoch preset">
+            <button class="segment" type="button" data-epoch="2002">2002</button>
+            <button class="segment active" type="button" data-epoch="2004">2004</button>
+            <button class="segment" type="button" data-epoch="2006">2006</button>
+          </div>
+        </section>
+
+        <section class="control-section">
+          <div class="section-title">
+            <h3>Light Echo Parameters</h3>
+            <span>procedural</span>
+          </div>
+          <div class="row">
+            <label for="phase">Echo age <output id="phaseOut">0.58</output></label>
+            <input id="phase" type="range" min="0" max="1" step="0.01" value="0.58" />
+            <p class="control-hint">Expansion phase of the illuminated dust surface.</p>
+          </div>
+          <div class="row">
+            <label for="dust">Dust contrast <output id="dustOut">0.86</output></label>
+            <input id="dust" type="range" min="0.45" max="1.3" step="0.01" value="0.86" />
+            <p class="control-hint">Density separation between bright sheets and shadowed voids.</p>
+          </div>
+          <div class="row">
+            <label for="source">Core luminosity <output id="sourceOut">0.72</output></label>
+            <input id="source" type="range" min="0.35" max="1.2" step="0.01" value="0.72" />
+            <p class="control-hint">Brightness of the warm central illumination source.</p>
+          </div>
+        </section>
+
+        <section class="control-section">
+          <div class="section-title">
+            <h3>Color Mapping</h3>
+            <span>RGB transfer</span>
+          </div>
+          <div class="swatches">
+            <div class="swatch">Background</div>
+            <div class="swatch">Dense dust</div>
+            <div class="swatch">Warm scatter</div>
+            <div class="swatch">Blue scatter</div>
+          </div>
+        </section>
+
+        <section class="control-section">
+          <div class="section-title">
+            <h3>Actions</h3>
+            <span>canvas output</span>
+          </div>
+          <div class="actions">
+            <button class="primary-action" id="render" type="button">Render Preview</button>
+            <button class="secondary-action" id="download" type="button" disabled>Export PNG</button>
+            <p class="action-status" id="renderStatus" role="status" aria-live="polite">Loading generated preview...</p>
+          </div>
+        </section>
+
+        <section class="control-section">
+          <div class="section-title">
+            <h3>Model Notes</h3>
+            <span>equation core</span>
+          </div>
+          <p class="model-copy">Intensity combines a warm central source with a moving light-echo surface intersecting uneven dust sheets.</p>
+          <div class="formula">
+            <p>I = S_star + (E_volume + E_shells) * T_dust * M_asym</p>
+            <p>z_echo = (r^2 - t^2) / 2t</p>
+            <p>E_volume = sum w_i exp(-((z_echo - z_sheet_i)^2) / 2sigma_i^2)</p>
+            <p>RGB = tone(background + warm_dense_dust + cool_thin_scatter)</p>
+          </div>
+        </section>
+      </aside>
+    </main>
+
+    <script>
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d", { willReadFrequently: false });
+      const phase = document.getElementById("phase");
+      const dust = document.getElementById("dust");
+      const source = document.getElementById("source");
+      const phaseOut = document.getElementById("phaseOut");
+      const dustOut = document.getElementById("dustOut");
+      const sourceOut = document.getElementById("sourceOut");
+      const renderButton = document.getElementById("render");
+      const downloadButton = document.getElementById("download");
+      const renderStatus = document.getElementById("renderStatus");
+      const epochButtons = [...document.querySelectorAll(".segment")];
+      const seed = 838.0;
+      const generatedImage = new Image();
+      generatedImage.decoding = "async";
+      const presets = {
+        2002: { phase: 0.28, dust: 0.92, source: 0.82, image: "v838_monocerotis_2002.png", label: "2002 early echo" },
+        2004: { phase: 0.58, dust: 0.86, source: 0.72, image: "v838_monocerotis.png", label: "2004 reference phase" },
+        2006: { phase: 0.82, dust: 1.05, source: 0.64, image: "v838_monocerotis_2006.png", label: "2006 broad echo" },
+      };
+      let dirty = false;
+      let customRendered = false;
+      let renderToken = 0;
+      generatedImage.src = presets["2004"].image;
+
+      const clamp01 = (value) => Math.min(1, Math.max(0, value));
+      const fract = (value) => value - Math.floor(value);
+      const mix = (a, b, t) => a * (1 - t) + b * t;
+      const angleDelta = (theta, center) => Math.atan2(Math.sin(theta - center), Math.cos(theta - center));
+      const smoothstep = (a, b, value) => {
+        const t = clamp01((value - a) / (b - a));
+        return t * t * (3 - 2 * t);
+      };
+
+      function hash2(x, y, s) {
+        return fract(Math.sin(x * 127.1 + y * 311.7 + s * 74.7) * 43758.5453123);
+      }
+
+      function noise(x, y, s) {
+        const xi = Math.floor(x);
+        const yi = Math.floor(y);
+        const xf = x - xi;
+        const yf = y - yi;
+        const u = xf * xf * (3 - 2 * xf);
+        const v = yf * yf * (3 - 2 * yf);
+        return mix(
+          mix(hash2(xi, yi, s), hash2(xi + 1, yi, s), u),
+          mix(hash2(xi, yi + 1, s), hash2(xi + 1, yi + 1, s), u),
+          v,
+        );
+      }
+
+      function fbm(x, y, s, octaves = 5) {
+        let total = 0;
+        let amp = 0.5;
+        let freq = 1;
+        let norm = 0;
+        for (let i = 0; i < octaves; i += 1) {
+          total += amp * noise(x * freq, y * freq, s + i * 17.13);
+          norm += amp;
+          freq *= 2.03;
+          amp *= 0.52;
+        }
+        return total / norm;
+      }
+
+      function ridge(x, y, s) {
+        const n = fbm(x, y, s, 4);
+        return (1 - Math.abs(2 * n - 1)) ** 1.7;
+      }
+
+      function setSize() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        const ratio = Math.min(window.devicePixelRatio || 1, 1.15);
+        const rectAspect = Math.max(0.62, rect.width / Math.max(1, rect.height));
+        const maxWidth = window.innerWidth <= 880 ? 520 : 880;
+        canvas.width = Math.min(maxWidth, Math.max(360, Math.floor(rect.width * ratio)));
+        canvas.height = Math.max(260, Math.round(canvas.width / rectAspect));
+      }
+
+      function updateOutputs() {
+        phaseOut.value = Number(phase.value).toFixed(2);
+        dustOut.value = Number(dust.value).toFixed(2);
+        sourceOut.value = Number(source.value).toFixed(2);
+      }
+
+      function setClean(message) {
+        dirty = false;
+        downloadButton.disabled = false;
+        renderStatus.textContent = message;
+      }
+
+      function cancelActiveRender() {
+        renderToken += 1;
+        renderButton.textContent = "Render Preview";
+        renderButton.disabled = false;
+      }
+
+      function setDirty(message = "Parameters changed. Render preview before exporting.") {
+        cancelActiveRender();
+        dirty = true;
+        customRendered = false;
+        downloadButton.disabled = true;
+        renderStatus.textContent = message;
+      }
+
+      function nextFrame() {
+        return new Promise((resolve) => requestAnimationFrame(resolve));
+      }
+
+      function drawImageCover(image) {
+        const canvasAspect = canvas.width / canvas.height;
+        const imageAspect = image.naturalWidth / image.naturalHeight;
+        let sx = 0;
+        let sy = 0;
+        let sw = image.naturalWidth;
+        let sh = image.naturalHeight;
+
+        if (imageAspect > canvasAspect) {
+          sw = image.naturalHeight * canvasAspect;
+          sx = (image.naturalWidth - sw) / 2;
+        } else {
+          sh = image.naturalWidth / canvasAspect;
+          sy = (image.naturalHeight - sh) / 2;
+        }
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(image, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+      }
+
+      function drawGenerated() {
+        updateOutputs();
+        setSize();
+        if (!generatedImage.complete || !generatedImage.naturalWidth) return;
+        drawImageCover(generatedImage);
+        customRendered = false;
+        setClean("Generated preset is ready to export.");
+      }
+
+      async function paint(token) {
+        updateOutputs();
+        setSize();
+        const width = canvas.width;
+        const height = canvas.height;
+        const p = Number(phase.value);
+        const dustContrast = Number(dust.value);
+        const sourceStrength = Number(source.value);
+        const image = ctx.createImageData(width, height);
+        const data = image.data;
+
+        const shellSpecs = [
+          [0.19, 0.02, 0.42, -0.01, 0.01, 4, 0.2],
+          [0.29, 0.024, 0.52, 0.016, -0.006, 5, 1.4],
+          [0.4, 0.025, 0.66, -0.014, -0.02, 3, 2.6],
+          [0.52, 0.03, 0.92, 0.02, 0.018, 6, 0.9],
+          [0.64, 0.033, 1, -0.03, 0.014, 4, 2.1],
+          [0.76, 0.038, 0.88, 0.028, -0.016, 7, 1.7],
+          [0.9, 0.05, 0.78, -0.018, 0.026, 5, 3],
+        ];
+
+        for (let j = 0; j < height; j += 1) {
+          if (token !== renderToken) return false;
+          for (let i = 0; i < width; i += 1) {
+            let x = (i / width - 0.5) * 2.54 + 0.03;
+            const y = (j / height - 0.5) * 1.82 - 0.02;
+            x += 0.018 * Math.sin((j / height) * Math.PI);
+
+            const theta = Math.atan2(y * 1.02, x);
+            const rBase = Math.sqrt((x / 1.03) ** 2 + (y / 0.96) ** 2);
+            const low = fbm(x * 1.35 + p * 0.8, y * 1.35 - p * 0.5, seed + 1, 5);
+            const medium = fbm(x * 3.1 - p * 0.6, y * 3.1 + p * 0.9, seed + 9, 5);
+            const fine = ridge(x * 9 + 0.6, y * 9 - 0.4, seed + 17);
+            const echoExtent = 0.72 + 0.48 * p;
+
+            let boundary = 0.84 + 0.14 * Math.sin(theta - 0.55) + 0.11 * Math.sin(2 * theta + 1.65) - 0.08 * Math.cos(3 * theta - 0.6) + 0.05 * Math.sin(6 * theta + 1.1) + 0.14 * (low - 0.5);
+            boundary += 0.12 * Math.exp(-((angleDelta(theta, -2.45) / 0.58) ** 2));
+            boundary -= 0.13 * Math.exp(-((angleDelta(theta, 0.15) / 0.42) ** 2));
+            boundary += 0.06 * Math.exp(-((angleDelta(theta, 1.85) / 0.35) ** 2));
+            boundary *= echoExtent;
+            const cloud = smoothstep(boundary + 0.16, boundary - 0.05, rBase) * smoothstep(0.11, 0.24, rBase);
+
+            let sector = 0.68 + 0.27 * Math.cos(theta + 2.35) + 0.22 * Math.sin(2 * theta - 0.35) + 0.15 * Math.cos(5 * theta + 1.5);
+            let gaps = 1;
+            gaps -= 0.58 * Math.exp(-((angleDelta(theta, 0.45) / 0.24) ** 2)) * smoothstep(0.32, 0.74, rBase);
+            gaps -= 0.46 * Math.exp(-((angleDelta(theta, -1.1) / 0.3) ** 2)) * smoothstep(0.38, 0.88, rBase);
+            gaps -= 0.4 * Math.exp(-((angleDelta(theta, 2.15) / 0.26) ** 2)) * smoothstep(0.28, 0.78, rBase);
+            gaps -= 0.32 * Math.exp(-((angleDelta(theta, -0.18) / 0.18) ** 2)) * smoothstep(0.5, 0.95, rBase);
+            const clumpMask = smoothstep(0.28, 0.82, fbm(x * 2.2 + 4, y * 2.2 - 1.5, seed + 27, 5));
+            const asymmetry = clamp01(sector * gaps * (0.42 + 0.82 * clumpMask));
+
+            let shells = 0;
+            let shellDensity = 0;
+            let coolScatter = 0;
+            let warmScatter = 0;
+            for (let k = 0; k < shellSpecs.length; k += 1) {
+              let [radius, widthI, weight, cx, cy, harmonic, offset] = shellSpecs[k];
+              radius *= echoExtent;
+              widthI *= 0.88 + 0.16 * echoExtent;
+              const xi = x - cx;
+              const yi = y - cy;
+              const ti = Math.atan2(yi * (1 + 0.035 * Math.sin(offset)), xi);
+              const ri = Math.sqrt((xi / (1.02 + 0.035 * Math.cos(offset))) ** 2 + (yi / (0.95 + 0.025 * Math.sin(offset))) ** 2);
+              const warp = 0.028 * Math.sin(harmonic * ti + offset + p * 1.4) + 0.018 * Math.sin((harmonic + 2) * ti - 1.7 * offset) + 0.04 * (fbm(xi * 2 + k, yi * 2 - k, seed + k * 11, 4) - 0.5);
+              const band = Math.exp(-((ri + warp - radius) ** 2) / (2 * widthI ** 2));
+              const arcBreaks = smoothstep(
+                0.34,
+                0.82,
+                fbm(Math.cos(ti) * (2.1 + 0.17 * k) + p, Math.sin(ti) * (2.1 + 0.17 * k) - p, seed + 70 + k, 4),
+              );
+              const directional = 0.6 + 0.4 * Math.cos(ti - 0.35 - 0.18 * k);
+              const shell = weight * band * (0.24 + 0.94 * arcBreaks) * (0.55 + 0.62 * directional);
+              shells += shell;
+              shellDensity += shell * (1.18 - 0.56 * radius);
+              coolScatter += shell * smoothstep(0.48, 0.96, radius);
+              warmScatter += shell * smoothstep(0.78, 0.2, radius);
+            }
+
+            const echoTime = 0.45 + 0.58 * p;
+            const zEcho = (rBase ** 2 - echoTime ** 2) / (2 * echoTime);
+            const sheetSpecs = [
+              [-0.34, 0.055, 0.74, 0.16, -0.08, 1.8, 0.3],
+              [-0.18, 0.045, 0.86, -0.08, 0.18, 2.4, 1.7],
+              [0.02, 0.052, 1.0, 0.1, 0.06, 3.1, 2.4],
+              [0.21, 0.06, 0.72, -0.15, -0.02, 2.7, 3.6],
+              [0.4, 0.076, 0.54, 0.03, -0.16, 1.5, 4.8],
+            ];
+            let volumeEcho = 0;
+            let volumeDensity = 0;
+            let coolVolume = 0;
+            let warmVolume = 0;
+            for (let k = 0; k < sheetSpecs.length; k += 1) {
+              const [z0, thickness, weight, tiltX, tiltY, freq, offset] = sheetSpecs[k];
+              const sheetNoise = fbm(x * freq + offset + p, y * freq - offset * 0.7, seed + 120 + k, 5);
+              const sheetZ = z0 + tiltX * x + tiltY * y + 0.16 * (sheetNoise - 0.5) + 0.035 * Math.sin((2 + 0.4 * k) * theta + offset);
+              const front = Math.exp(-((zEcho - sheetZ) ** 2) / (2 * thickness ** 2));
+              let sheetDust = smoothstep(
+                0.24,
+                0.84,
+                fbm(x * (2.7 + 0.25 * k) + offset, y * (2.7 + 0.25 * k) - offset, seed + 150 + k, 5),
+              );
+              sheetDust *= 0.45 + 0.7 * ridge(x * (5.6 + k), y * (5.6 + k), seed + 170 + k);
+              const edgeFade = smoothstep(boundary + 0.2, boundary - 0.1, rBase) * smoothstep(0.09, 0.2, rBase);
+              const directionalSheet = 0.62 + 0.38 * Math.cos(theta - 0.45 + 0.35 * k);
+              const contribution = weight * front * sheetDust * edgeFade * directionalSheet;
+              volumeEcho += contribution;
+              volumeDensity += contribution * (0.52 + 0.72 * sheetDust);
+              coolVolume += contribution * smoothstep(0.44, 0.95, rBase);
+              warmVolume += contribution * smoothstep(0.82, 0.16, rBase);
+            }
+
+            const radialStrata = 0.5 + 0.5 * Math.sin(58 * (rBase + 0.02 * Math.sin(5 * theta) + 0.03 * (low - 0.5)) + 5 * Math.sin(3 * theta + p));
+            const angularLace = 0.5 + 0.5 * Math.sin(22 * (x * Math.cos(1.05) + y * Math.sin(1.05)) + 10 * medium + 4 * Math.sin(theta - 0.7));
+            let filaments = 0.7 * radialStrata ** 5 + 0.48 * angularLace ** 4 + 0.65 * fine;
+            filaments = clamp01(filaments * dustContrast);
+            const translucentDust = cloud * (0.11 + 0.48 * medium + 0.34 * fine) * (0.5 + 0.7 * clumpMask);
+            let illuminatedDust = (volumeEcho * (0.52 + 0.86 * filaments) + 0.34 * shells * (0.26 + 0.82 * filaments) + 0.14 * translucentDust) * asymmetry;
+
+            const laneA = Math.exp(-((angleDelta(theta, 0.15) / 0.19) ** 2)) * smoothstep(0.32, 0.76, rBase);
+            const laneB = Math.exp(-((angleDelta(theta, -2.55) / 0.23) ** 2)) * smoothstep(0.4, 0.92, rBase);
+            const laneC = Math.exp(-((rBase - (0.54 + 0.06 * Math.sin(2.2 * theta))) ** 2) / (2 * 0.02 ** 2));
+            const voids = 0.6 * laneA + 0.44 * laneB + 0.3 * laneC * smoothstep(0.4, 0.76, medium);
+            illuminatedDust *= clamp01(1 - voids);
+
+            const rho = Math.sqrt((x - 0.03) ** 2 + (y + 0.02) ** 2);
+            const starCore = Math.exp(-((rho / 0.012) ** 2));
+            const starGlow = Math.exp(-((rho / 0.07) ** 2));
+            const innerHalo = Math.exp(-((rho / 0.16) ** 2)) * (0.72 + 0.28 * medium);
+            const vignette = clamp01(1.08 - 0.4 * Math.sqrt((x * 0.82) ** 2 + (y * 0.98) ** 2));
+            const bgNoise = fbm(x + 8, y - 2, seed + 200, 4);
+            const density = clamp01(0.28 * shellDensity + 0.78 * volumeDensity + 0.54 * translucentDust);
+            const thin = clamp01(0.55 * coolScatter + 1.35 * coolVolume + (1 - density) * illuminatedDust * 0.32);
+            const inner = clamp01(0.55 * warmScatter + 1.3 * warmVolume);
+            const shadow = clamp01(voids + (1 - clumpMask) * cloud * 0.38);
+
+            let red = (0.012 + 0.02 * bgNoise) * vignette;
+            let green = (0.016 + 0.02 * bgNoise) * vignette;
+            let blue = (0.032 + 0.05 * bgNoise) * vignette;
+            red += illuminatedDust * (0.98 + 0.95 * density + 0.56 * inner) * (1 - 0.1 * shadow) + 0.14 * translucentDust;
+            green += illuminatedDust * (0.62 + 0.34 * thin + 0.18 * density) * (1 - 0.24 * shadow) + 0.13 * translucentDust;
+            blue += illuminatedDust * (0.36 + 0.82 * thin - 0.26 * density) * (1 - 0.3 * shadow) + 0.15 * translucentDust;
+            red += sourceStrength * (2 * starCore + 0.56 * starGlow + 0.09 * innerHalo);
+            green += sourceStrength * (1.05 * starCore + 0.29 * starGlow + 0.06 * innerHalo);
+            blue += sourceStrength * (0.54 * starCore + 0.13 * starGlow + 0.04 * innerHalo);
+
+            const cell = 0.021;
+            const gx = Math.floor((x + 2) / cell);
+            const gy = Math.floor((y + 2) / cell);
+            const localX = fract((x + 2) / cell) - 0.5;
+            const localY = fract((y + 2) / cell) - 0.5;
+            let points = Math.exp(-(localX * localX + localY * localY) / 0.012) * (hash2(gx, gy, seed + 500) > 0.9975 ? 1 : 0);
+            points *= hash2(gx - 4, gy + 8, seed + 501) * (1 - clamp01(cloud + 0.6 * shells));
+            red += 0.55 * points;
+            green += 0.64 * points;
+            blue += 0.85 * points;
+
+            red *= vignette * 1.03;
+            green *= vignette * 1.03;
+            blue *= vignette * 1.03;
+            red = clamp01((1 - Math.exp(-1.22 * red)) ** (1 / 2.1));
+            green = clamp01((1 - Math.exp(-1.22 * green)) ** (1 / 2.1));
+            blue = clamp01((1 - Math.exp(-1.22 * blue)) ** (1 / 2.1));
+
+            const idx = (j * width + i) * 4;
+            data[idx] = Math.round(red * 255);
+            data[idx + 1] = Math.round(green * 255);
+            data[idx + 2] = Math.round(blue * 255);
+            data[idx + 3] = 255;
+          }
+          if (j % 6 === 0) {
+            ctx.putImageData(image, 0, 0);
+            renderStatus.textContent = `Rendering procedural preview... ${Math.round((j / height) * 100)}%`;
+            await nextFrame();
+          }
+        }
+        ctx.putImageData(image, 0, 0);
+        customRendered = true;
+        return true;
+      }
+
+      const handleParameterInput = () => {
+        epochButtons.forEach((item) => item.classList.remove("active"));
+        updateOutputs();
+        setDirty();
+      };
+
+      [phase, dust, source].forEach((input) => {
+        input.addEventListener("input", handleParameterInput);
+        input.addEventListener("change", handleParameterInput);
+      });
+      epochButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          cancelActiveRender();
+          epochButtons.forEach((item) => item.classList.toggle("active", item === button));
+          const preset = presets[button.dataset.epoch];
+          phase.value = preset.phase;
+          dust.value = preset.dust;
+          source.value = preset.source;
+          updateOutputs();
+          if (!generatedImage.src.endsWith(preset.image)) {
+            downloadButton.disabled = true;
+            renderStatus.textContent = "Loading generated preset...";
+            generatedImage.src = preset.image;
+            if (generatedImage.complete) drawGenerated();
+          } else {
+            drawGenerated();
+          }
+        });
+      });
+      renderButton.addEventListener("click", () => {
+        const token = renderToken + 1;
+        renderToken = token;
+        renderButton.disabled = true;
+        downloadButton.disabled = true;
+        renderButton.textContent = "Rendering...";
+        renderStatus.textContent = "Rendering procedural preview...";
+        requestAnimationFrame(() => {
+          setTimeout(async () => {
+            try {
+              const rendered = await paint(token);
+              if (rendered && token === renderToken) {
+                setClean("Custom preview rendered and ready to export.");
+              }
+            } catch (error) {
+              console.error(error);
+              if (token === renderToken) {
+                dirty = true;
+                customRendered = false;
+                downloadButton.disabled = true;
+                renderStatus.textContent = "Render failed. Adjust settings and try again.";
+              }
+            } finally {
+              if (token === renderToken) {
+                renderButton.textContent = "Render Preview";
+                renderButton.disabled = false;
+              }
+            }
+          }, 30);
+        });
+      });
+      downloadButton.addEventListener("click", () => {
+        if (dirty || downloadButton.disabled) return;
+        const link = document.createElement("a");
+        link.download = "v838-monocerotis-light-echo-study.png";
+        link.href = customRendered ? canvas.toDataURL("image/png") : generatedImage.src;
+        link.click();
+      });
+      window.addEventListener("resize", () => {
+        const wasDirty = dirty;
+        const wasCustom = customRendered;
+        drawGenerated();
+        if (wasCustom) {
+          setDirty("Canvas resized. Render preview again before exporting.");
+        } else if (wasDirty) {
+          setDirty();
+        }
+      });
+      generatedImage.addEventListener("load", drawGenerated);
+      generatedImage.addEventListener("error", () => {
+        dirty = true;
+        customRendered = false;
+        downloadButton.disabled = true;
+        renderStatus.textContent = "Preset image could not load. Render a preview to create an exportable canvas.";
+      });
+      drawGenerated();
+    </script>
+  </body>
+</html>
